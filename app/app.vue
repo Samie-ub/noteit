@@ -30,16 +30,8 @@ watch(
   >
     <AppSidebar v-model:current-note-id="currentNoteId" />
 
-    <main class="flex flex-1 flex-col overflow-hidden">
-      <header
-        v-if="currentNote"
-        class="border-b border-neutral-200 px-4 py-3 dark:border-neutral-700"
-      >
-        <h2 class="truncate text-lg font-medium text-neutral-800 dark:text-neutral-200">
-          {{ currentNote.title || 'Untitled' }}
-        </h2>
-      </header>
-      <div class="flex-1 overflow-auto">
+    <main class="flex flex-1 flex-col min-h-0 overflow-hidden">
+      <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
         <ClientOnly>
           <NoteEditor
             v-if="currentNote"
