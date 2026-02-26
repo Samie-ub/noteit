@@ -10,8 +10,16 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@phosphor-icons/vue": "^2.2.1",
+    "@tiptap/pm": "^3.20.0",
+    "@tiptap/starter-kit": "^3.20.0",
+    "@tiptap/vue-3": "^3.20.0",
     "nuxt": "^4.3.1",
     "vue": "^3.5.28",
     "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19"
   }
 }
