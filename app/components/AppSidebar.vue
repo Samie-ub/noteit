@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { PhMoon, PhSun, PhPlus, PhTrashSimple, PhNotePencil, PhClockCounterClockwise } from '@phosphor-icons/vue'
+import { PhPlus, PhTrashSimple, PhNotePencil, PhClockCounterClockwise } from '@phosphor-icons/vue'
 import type { Note } from '../types/note'
 import { useNotes } from '../composables/useNotes'
-import { useTheme } from '../composables/useTheme'
 
 const { createNote, getRecentNotes, deleteNote } = useNotes()
-const { theme, toggleTheme } = useTheme()
 
 const currentNoteId = defineModel<string | null>('currentNoteId', { default: null })
 const recentNotes = computed(() => getRecentNotes())
@@ -38,20 +36,11 @@ function formatDate(ts: number) {
   <aside
     class="flex h-full min-w-[16rem] w-64 flex-shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900"
   >
-    <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-2 dark:border-neutral-700">
+    <div class="border-b border-neutral-200 px-4 py-2.5 dark:border-neutral-700">
       <h1 class="flex items-center gap-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
-        <PhNotePencil :size="20" weight="regular" class="text-neutral-600 dark:text-neutral-400" />
+        <PhNotePencil :size="16" weight="regular" class="text-neutral-600 dark:text-neutral-400" />
         Noteit
       </h1>
-      <button
-        type="button"
-        class="rounded-lg p-2 text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
-        :aria-label="theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'"
-        @click="toggleTheme"
-      >
-        <PhMoon v-if="theme === 'light'" :size="20" weight="regular" class="text-current" />
-        <PhSun v-else :size="20" weight="regular" class="text-current" />
-      </button>
     </div>
 
     <button
