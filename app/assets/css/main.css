@@ -3,3 +3,8 @@
 body {
   font-family: 'Figtree', ui-sans-serif, system-ui, sans-serif;
 }
+
+/* Narrower toasts */
+[data-sonner-toaster] {
+  --width: 200px !important;
+}

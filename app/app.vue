@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Toaster } from 'vue-sonner'
+import 'vue-sonner/style.css'
 import { useNotes } from './composables/useNotes'
 import { useTheme } from './composables/useTheme'
 
@@ -53,5 +55,6 @@ watch(
         </ClientOnly>
       </div>
     </main>
+    <Toaster position="top-right" richColors closeButton />
   </div>
 </template>
