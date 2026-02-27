@@ -4,6 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import type { Note } from '../types/note'
 import { useNotes } from '../composables/useNotes'
+import { toast } from 'vue-sonner'
 import {
   PhTextB,
   PhTextItalic,
@@ -19,6 +20,7 @@ import {
   PhTextHThree,
   PhMoon,
   PhSun,
+  PhCopy,
 } from '@phosphor-icons/vue'
 import { useTheme } from '../composables/useTheme'
 
@@ -35,6 +37,7 @@ const emit = defineEmits<{
 const { updateNote } = useNotes()
 
 const editor = ref<InstanceType<typeof Editor> | null>(null)
+let savedToastTimeout: ReturnType<typeof setTimeout> | null = null
 
 const editorContent = computed({
   get: () => props.note?.content ?? '<p></p>',
@@ -63,6 +66,11 @@ onMounted(() => {
       const title = text.slice(0, 50).trim() || 'Untitled note'
       updateNote(props.note.id, { content: html, title })
       emit('update:title', title)
+      if (savedToastTimeout) clearTimeout(savedToastTimeout)
+      savedToastTimeout = setTimeout(() => {
+        savedToastTimeout = null
+        toast.success('Saved')
+      }, 1200)
     },
   })
 })
@@ -88,12 +96,24 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  if (savedToastTimeout) clearTimeout(savedToastTimeout)
   editor.value?.destroy()
   editor.value = null
 })
 
 function isActive(name: string, attrs?: Record<string, unknown>) {
   return editor.value?.isActive(name, attrs) ?? false
+}
+
+async function copyNoteContent() {
+  if (!editor.value || !props.note) return
+  const text = editor.value.getText()
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.success('Copied to clipboard')
+  } catch {
+    toast.error('Failed to copy')
+  }
 }
 </script>
 
@@ -157,6 +177,18 @@ function isActive(name: string, attrs?: Record<string, unknown>) {
         @click="editor.chain().focus().toggleCode().run()"
       >
         <PhCode class="h-4 w-4" :weight="isActive('code') ? 'fill' : 'regular'" />
+      </button>
+
+      <span class="mx-1 h-4 w-px bg-neutral-300 dark:bg-neutral-600" aria-hidden="true" />
+
+      <button
+        type="button"
+        class="rounded p-1.5 text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+        title="Copy note"
+        aria-label="Copy note"
+        @click="copyNoteContent"
+      >
+        <PhCopy class="h-4 w-4" weight="regular" />
       </button>
 
       <span class="mx-1 h-4 w-px bg-neutral-300 dark:bg-neutral-600" aria-hidden="true" />
