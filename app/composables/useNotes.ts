@@ -93,18 +93,21 @@ export function useNotes() {
   }
 
   function deleteNote(id: string) {
-    const note = notes.value.find((n) => n.id === id)
-    if (!note) return
-    note.deletedAt = Date.now()
+    const now = Date.now()
+    notes.value = notes.value.map((n) =>
+      n.id === id ? { ...n, deletedAt: now } : n
+    )
     persist()
     const recent = getRecentIds().filter((x) => x !== id)
     setRecentIds(recent)
   }
 
   function restoreNote(id: string) {
-    const note = notes.value.find((n) => n.id === id)
-    if (!note) return
-    delete note.deletedAt
+    notes.value = notes.value.map((n) => {
+      if (n.id !== id) return n
+      const { deletedAt: _, ...rest } = n
+      return rest as Note
+    })
     persist()
   }
 
@@ -127,11 +130,16 @@ export function useNotes() {
     id: string,
     updates: { title?: string; content?: string }
   ) {
-    const note = notes.value.find((n) => n.id === id)
-    if (!note) return
-    if (updates.title !== undefined) note.title = updates.title
-    if (updates.content !== undefined) note.content = updates.content
-    note.updatedAt = Date.now()
+    const now = Date.now()
+    notes.value = notes.value.map((n) => {
+      if (n.id !== id) return n
+      return {
+        ...n,
+        ...(updates.title !== undefined && { title: updates.title }),
+        ...(updates.content !== undefined && { content: updates.content }),
+        updatedAt: now,
+      }
+    })
     persist()
     addToRecent(id)
   }
