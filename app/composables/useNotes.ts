@@ -42,7 +42,12 @@ export function useNotes() {
   onMounted(() => {
     if (import.meta.client) {
       const stored = getStoredNotes()
-      if (stored.length) notes.value = stored
+      if (stored.length) {
+        notes.value = stored
+      } else {
+        // New user: create one default note
+        createNote('Untitled note', '<p></p>')
+      }
     }
   })
 
@@ -73,7 +78,49 @@ export function useNotes() {
 
   function getNote(id: string | null): Note | undefined {
     if (!id) return undefined
-    return notes.value.find((n) => n.id === id)
+    const note = notes.value.find((n) => n.id === id)
+    return note && !note.deletedAt ? note : undefined
+  }
+
+  function getActiveNotes(): Note[] {
+    return notes.value.filter((n) => !n.deletedAt)
+  }
+
+  function getTrashedNotes(): Note[] {
+    return notes.value
+      .filter((n) => n.deletedAt != null)
+      .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0))
+  }
+
+  function deleteNote(id: string) {
+    const note = notes.value.find((n) => n.id === id)
+    if (!note) return
+    note.deletedAt = Date.now()
+    persist()
+    const recent = getRecentIds().filter((x) => x !== id)
+    setRecentIds(recent)
+  }
+
+  function restoreNote(id: string) {
+    const note = notes.value.find((n) => n.id === id)
+    if (!note) return
+    delete note.deletedAt
+    persist()
+  }
+
+  function permanentlyDeleteNote(id: string) {
+    notes.value = notes.value.filter((n) => n.id !== id)
+    persist()
+    const recent = getRecentIds().filter((x) => x !== id)
+    setRecentIds(recent)
+  }
+
+  function emptyTrash() {
+    const trashedIds = notes.value.filter((n) => n.deletedAt != null).map((n) => n.id)
+    notes.value = notes.value.filter((n) => n.deletedAt == null)
+    persist()
+    const recent = getRecentIds().filter((id) => !trashedIds.includes(id))
+    setRecentIds(recent)
   }
 
   function updateNote(
@@ -89,25 +136,25 @@ export function useNotes() {
     addToRecent(id)
   }
 
-  function deleteNote(id: string) {
-    notes.value = notes.value.filter((n) => n.id !== id)
-    persist()
-    const recent = getRecentIds().filter((x) => x !== id)
-    setRecentIds(recent)
-  }
-
   function getRecentNotes(): Note[] {
     const recentIds = getRecentIds()
-    const byId = new Map(notes.value.map((n) => [n.id, n]))
-    return recentIds.map((id) => byId.get(id)).filter(Boolean) as Note[]
+    const activeById = new Map(
+      notes.value.filter((n) => !n.deletedAt).map((n) => [n.id, n])
+    )
+    return recentIds.map((id) => activeById.get(id)).filter(Boolean) as Note[]
   }
 
   return {
     notes,
     createNote,
     getNote,
+    getActiveNotes,
+    getTrashedNotes,
     updateNote,
     deleteNote,
+    restoreNote,
+    permanentlyDeleteNote,
+    emptyTrash,
     getRecentNotes,
     addToRecent,
     persist,
