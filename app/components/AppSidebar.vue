@@ -33,10 +33,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScrollHint)
 })
 
-/** Recent section shows only when there are multiple notes and at least one has been viewed */
 const showRecentSection = computed(() => activeNotes.value.length >= 2 && recentNotes.value.length >= 1)
 
-/** Notes to show in the list: recent (when section visible) or the single active note so it's clickable */
 const sidebarNoteList = computed(() =>
   showRecentSection.value ? recentNotes.value : (activeNotes.value.length === 1 ? activeNotes.value : [])
 )
@@ -82,6 +80,31 @@ function formatDate(ts: number) {
   const isToday = d.toDateString() === now.toDateString()
   if (isToday) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
+}
+
+const TIME_OPTS_24H = { hour: '2-digit' as const, minute: '2-digit' as const, hour12: false }
+
+function formatNoteTimestamp(note: { createdAt: number; updatedAt: number }) {
+  const isCreated = note.updatedAt - note.createdAt < 1000 // within 1s = never edited
+  const ts = isCreated ? note.createdAt : note.updatedAt
+  const d = new Date(ts)
+  const now = new Date()
+  const isToday = d.toDateString() === now.toDateString()
+  const time = d.toLocaleTimeString([], TIME_OPTS_24H)
+  const prefix = isCreated ? 'Created' : 'Updated'
+  if (isToday) return `${prefix} today at ${time}`
+  const date = d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
+  return `${prefix} on ${date} at ${time}`
+}
+
+function formatDeletedTimestamp(deletedAt: number) {
+  const d = new Date(deletedAt)
+  const now = new Date()
+  const isToday = d.toDateString() === now.toDateString()
+  const time = d.toLocaleTimeString([], TIME_OPTS_24H)
+  if (isToday) return `Deleted today at ${time}`
+  const date = d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
+  return `Deleted on ${date} at ${time}`
 }
 
 watch([sidebarNoteList, trashedNotes], () => {
@@ -132,7 +155,7 @@ watch([sidebarNoteList, trashedNotes], () => {
                 {{ note.title || 'Untitled' }}
               </span>
               <span class="block truncate text-xs text-neutral-500 dark:text-neutral-400">
-                {{ formatDate(note.updatedAt) }}
+                {{ formatNoteTimestamp(note) }}
               </span>
             </button>
             <button
@@ -170,12 +193,17 @@ watch([sidebarNoteList, trashedNotes], () => {
           <li
             v-for="note in trashedNotes"
             :key="note.id"
-            class="group flex items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            class="group flex items-center gap-2 rounded-md px-2 py-2 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
-            <span class="min-w-0 flex-1 truncate text-left text-sm text-neutral-500 dark:text-neutral-400">
-              {{ note.title || 'Untitled' }}
-            </span>
-            <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition">
+            <div class="min-w-0 flex-1 text-left">
+              <span class="block truncate text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                {{ note.title || 'Untitled' }}
+              </span>
+              <span v-if="note.deletedAt != null" class="block truncate text-xs text-neutral-500 dark:text-neutral-500">
+                {{ formatDeletedTimestamp(note.deletedAt) }}
+              </span>
+            </div>
+            <div class="flex flex-shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100 transition">
               <button
                 type="button"
                 class="rounded p-1 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-800 dark:hover:bg-neutral-600 dark:hover:text-neutral-200"
@@ -200,13 +228,11 @@ watch([sidebarNoteList, trashedNotes], () => {
       </section>
       </div>
 
-      <!-- Bottom fade -->
       <div
         class="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-neutral-50 to-transparent dark:from-neutral-900"
         aria-hidden="true"
       />
 
-      <!-- Scroll-down indicator -->
       <Transition
         enter-active-class="transition duration-200 ease-out"
         enter-from-class="opacity-0 translate-y-1"
@@ -237,10 +263,10 @@ watch([sidebarNoteList, trashedNotes], () => {
 
 <style scoped>
 .sidebar-scroll {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
 }
 .sidebar-scroll::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none; 
 }
 </style>

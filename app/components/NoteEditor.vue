@@ -37,7 +37,6 @@ const emit = defineEmits<{
 const { updateNote } = useNotes()
 
 const editor = ref<InstanceType<typeof Editor> | null>(null)
-let savedToastTimeout: ReturnType<typeof setTimeout> | null = null
 
 const editorContent = computed({
   get: () => props.note?.content ?? '<p></p>',
@@ -66,11 +65,6 @@ onMounted(() => {
       const title = text.slice(0, 50).trim() || 'Untitled note'
       updateNote(props.note.id, { content: html, title })
       emit('update:title', title)
-      if (savedToastTimeout) clearTimeout(savedToastTimeout)
-      savedToastTimeout = setTimeout(() => {
-        savedToastTimeout = null
-        toast.success('Saved')
-      }, 1200)
     },
   })
 })
@@ -96,7 +90,6 @@ watch(
 )
 
 onBeforeUnmount(() => {
-  if (savedToastTimeout) clearTimeout(savedToastTimeout)
   editor.value?.destroy()
   editor.value = null
 })
@@ -119,13 +112,11 @@ async function copyNoteContent() {
 
 <template>
   <div class="flex h-full w-full min-h-0 flex-col">
-    <!-- Toolbar (fixed at top; only editor content scrolls) -->
     <div
       v-if="editor"
       class="flex shrink-0 flex-wrap items-center gap-0.5 border-b border-neutral-200 bg-neutral-50 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
     >
       <div class="flex flex-1 flex-wrap items-center gap-0.5   ">
-      <!-- Text style -->
       <button
         type="button"
         :class="[
@@ -193,7 +184,6 @@ async function copyNoteContent() {
 
       <span class="mx-1 h-4 w-px bg-neutral-300 dark:bg-neutral-600" aria-hidden="true" />
 
-      <!-- Block level -->
       <button
         type="button"
         :class="[
@@ -316,9 +306,8 @@ async function copyNoteContent() {
       </button>
     </div>
 
-    <!-- Scrollable editor area (100% height; toolbar stays visible) -->
-    <div class="min-h-0 flex-1 overflow-auto">
-      <EditorContent v-if="editor" :editor="editor" class="note-editor-content" />
+    <div class="flex min-h-0 flex-1 flex-col overflow-auto">
+      <EditorContent v-if="editor" :editor="editor" class="note-editor-content h-full min-h-full" />
       <div
         v-else
         class="h-full min-h-[320px] animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"
@@ -328,10 +317,14 @@ async function copyNoteContent() {
 </template>
 
 <style scoped>
+.note-editor-content :deep(> *),
 .note-editor-content :deep(.ProseMirror) {
   min-height: 100%;
+  height: 100%;
 }
-/* Placeholder from @tiptap/extension-placeholder (uses .is-editor-empty + data-placeholder) */
+.note-editor-content :deep(.ProseMirror) {
+  cursor: text;
+}
 .note-editor-content :deep(.ProseMirror .is-editor-empty::before) {
   color: #a3a3a3;
   content: attr(data-placeholder);
