@@ -10,8 +10,6 @@ const { theme } = useTheme()
 
 const currentNote = computed(() => getNote(currentNoteId.value))
 
-// If user lands with no notes, show empty state; they can click "New note" in sidebar.
-// If they have notes but none selected, auto-select most recent.
 watch(
   [currentNoteId, () => getRecentNotes().length],
   () => {
@@ -55,6 +53,6 @@ watch(
         </ClientOnly>
       </div>
     </main>
-    <Toaster position="top-right" richColors closeButton />
+    <Toaster position="bottom-right" richColors closeButton />
   </div>
 </template>
