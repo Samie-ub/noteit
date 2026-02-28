@@ -21,6 +21,7 @@ import {
   PhMoon,
   PhSun,
   PhCopy,
+  PhX,
 } from '@phosphor-icons/vue'
 import { useTheme } from '../composables/useTheme'
 
@@ -34,7 +35,7 @@ const emit = defineEmits<{
   'update:title': [value: string]
 }>()
 
-const { updateNote } = useNotes()
+const { updateNote, getActiveNotes } = useNotes()
 
 const editor = ref<InstanceType<typeof Editor> | null>(null)
 
@@ -108,6 +109,49 @@ async function copyNoteContent() {
     toast.error('Failed to copy')
   }
 }
+
+const infoMenuOpen = ref(false)
+
+const storageInfo = computed(() => {
+  if (import.meta.server) return { usedBytes: 0, noteCount: 0 }
+  const noteCount = getActiveNotes().length
+  try {
+    let used = 0
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key) {
+        const val = localStorage.getItem(key)
+        if (val) used += (key.length + val.length) * 2
+      }
+    }
+    return { usedBytes: used, noteCount }
+  } catch {
+    return { usedBytes: 0, noteCount }
+  }
+})
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+}
+
+const shortcutKeys = [
+  { keys: 'Ctrl/Cmd + N', action: 'New note' },
+  { keys: 'Ctrl/Cmd + ]', action: 'Next note' },
+  { keys: 'Ctrl/Cmd + [', action: 'Previous note' },
+  { keys: 'Ctrl + B', action: 'Bold' },
+  { keys: 'Ctrl + I', action: 'Italic' },
+  { keys: 'Ctrl + Shift + S', action: 'Strikethrough' },
+  { keys: 'Ctrl + E', action: 'Inline code' },
+  { keys: 'Ctrl + Shift + 7', action: 'Blockquote' },
+  { keys: 'Ctrl + Shift + 8', action: 'Bullet list' },
+  { keys: 'Ctrl + Shift + 9', action: 'Numbered list' },
+  { keys: 'Ctrl + Alt + C', action: 'Code block' },
+  { keys: 'Ctrl + Shift + 1', action: 'Heading 1' },
+  { keys: 'Ctrl + Shift + 2', action: 'Heading 2' },
+  { keys: 'Ctrl + Shift + 3', action: 'Heading 3' },
+]
 </script>
 
 <template>
@@ -306,12 +350,84 @@ async function copyNoteContent() {
       </button>
     </div>
 
-    <div class="flex min-h-0 flex-1 flex-col overflow-auto">
+    <div class="relative flex min-h-0 flex-1 flex-col overflow-auto">
       <EditorContent v-if="editor" :editor="editor" class="note-editor-content h-full min-h-full" />
       <div
         v-else
         class="h-full min-h-[320px] animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"
       />
+
+      <!-- Info menu trigger (bottom right) -->
+      <button
+        type="button"
+        class="absolute bottom-4 right-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-lg font-semibold text-neutral-600 shadow-sm transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+        :class="{ 'bg-neutral-200 dark:bg-neutral-600': infoMenuOpen }"
+        aria-label="App info & shortcuts"
+        title="App info & shortcuts"
+        @click="infoMenuOpen = !infoMenuOpen"
+      >
+        !
+      </button>
+
+      <!-- Info panel (full height of editor, slides in from right) -->
+      <Transition
+        enter-active-class="transition-transform duration-200 ease-out"
+        enter-from-class="translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-active-class="transition-transform duration-150 ease-in"
+        leave-from-class="translate-x-0"
+        leave-to-class="translate-x-full"
+      >
+        <div
+          v-show="infoMenuOpen"
+          class="absolute inset-y-0 right-0 z-10 flex w-72 flex-col border-l border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+        >
+          <div class="flex shrink-0 items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
+            <h3 class="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+              Info & shortcuts
+            </h3>
+            <button
+              type="button"
+              class="rounded p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
+              aria-label="Close"
+              @click="infoMenuOpen = false"
+            >
+              <PhX class="h-4 w-4" weight="bold" />
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto px-4 py-3 text-sm">
+            <section class="mb-4">
+              <h4 class="mb-2 font-medium text-neutral-700 dark:text-neutral-300">
+                Storage
+              </h4>
+              <div class="space-y-1 text-neutral-600 dark:text-neutral-400">
+                <p>Used: {{ formatBytes(storageInfo.usedBytes) }}</p>
+                <p>Notes: {{ storageInfo.noteCount }}</p>
+                <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-500">
+                  Data is stored in your browser (localStorage). No server or account required.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h4 class="mb-2 font-medium text-neutral-700 dark:text-neutral-300">
+                Shortcut keys
+              </h4>
+              <ul class="space-y-2 text-neutral-600 dark:text-neutral-400">
+                <li
+                  v-for="item in shortcutKeys"
+                  :key="item.keys"
+                  class="flex items-center justify-between gap-2"
+                >
+                  <kbd class="rounded border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:border-neutral-600 dark:bg-neutral-800">
+                    {{ item.keys }}
+                  </kbd>
+                  <span class="text-right text-xs">{{ item.action }}</span>
+                </li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>

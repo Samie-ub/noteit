@@ -5,7 +5,7 @@ import { useNotes } from './composables/useNotes'
 import { useTheme } from './composables/useTheme'
 
 const currentNoteId = ref<string | null>(null)
-const { getNote, getRecentNotes, addToRecent } = useNotes()
+const { getNote, getRecentNotes, addToRecent, createNote } = useNotes()
 const { theme } = useTheme()
 
 const currentNote = computed(() => getNote(currentNoteId.value))
@@ -22,6 +22,64 @@ watch(
   },
   { immediate: true }
 )
+
+function handleNewNote() {
+  const note = createNote()
+  currentNoteId.value = note.id
+}
+
+function goToPreviousNote() {
+  const recent = getRecentNotes()
+  if (recent.length === 0) return
+  const idx = currentNoteId.value
+    ? recent.findIndex((n) => n.id === currentNoteId.value)
+    : -1
+  const prevIdx = idx <= 0 ? recent.length - 1 : idx - 1
+  currentNoteId.value = recent[prevIdx].id
+  addToRecent(recent[prevIdx].id)
+}
+
+function goToNextNote() {
+  const recent = getRecentNotes()
+  if (recent.length === 0) return
+  const idx = currentNoteId.value
+    ? recent.findIndex((n) => n.id === currentNoteId.value)
+    : -1
+  const nextIdx = idx < 0 ? 0 : idx >= recent.length - 1 ? 0 : idx + 1
+  currentNoteId.value = recent[nextIdx].id
+  addToRecent(recent[nextIdx].id)
+}
+
+function onKeydown(e: KeyboardEvent) {
+  const mod = e.ctrlKey || e.metaKey
+  if (!mod) return
+  if (e.key === 'n') {
+    e.preventDefault()
+    handleNewNote()
+    return
+  }
+  if (e.key === ']') {
+    e.preventDefault()
+    goToNextNote()
+    return
+  }
+  if (e.key === '[') {
+    e.preventDefault()
+    goToPreviousNote()
+    return
+  }
+}
+
+onMounted(() => {
+  if (import.meta.client) {
+    window.addEventListener('keydown', onKeydown)
+  }
+})
+onBeforeUnmount(() => {
+  if (import.meta.client) {
+    window.removeEventListener('keydown', onKeydown)
+  }
+})
 </script>
 
 <template>
