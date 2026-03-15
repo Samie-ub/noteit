@@ -22,6 +22,7 @@ import {
   PhSun,
   PhCopy,
   PhX,
+  PhSidebarSimple,
 } from '@phosphor-icons/vue'
 import { useTheme } from '../composables/useTheme'
 
@@ -29,10 +30,12 @@ const { theme, toggleTheme } = useTheme()
 
 const props = defineProps<{
   note: Note | null
+  showSidebarToggle?: boolean
 }>()
 
 const emit = defineEmits<{
   'update:title': [value: string]
+  'open-sidebar': []
 }>()
 
 const { updateNote, getActiveNotes } = useNotes()
@@ -158,9 +161,29 @@ const shortcutKeys = [
   <div class="flex h-full w-full min-h-0 flex-col">
     <div
       v-if="editor"
-      class="flex shrink-0 flex-wrap items-center gap-0.5 border-b border-neutral-200 bg-neutral-50 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+      class="flex shrink-0 items-center gap-0 border-b border-neutral-200 bg-neutral-50 px-1 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
     >
-      <div class="flex flex-1 flex-wrap items-center gap-0.5   ">
+      <!-- Left: sidebar toggle (fixed) -->
+      <div class="flex shrink-0 items-center gap-0.5">
+        <button
+          v-if="props.showSidebarToggle"
+          type="button"
+          class="rounded p-1.5 text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100 md:hidden"
+          aria-label="Open sidebar"
+          title="Open sidebar"
+          @click="emit('open-sidebar')"
+        >
+          <PhSidebarSimple class="h-5 w-5" weight="regular" />
+        </button>
+        <span
+          v-if="props.showSidebarToggle"
+          class="mx-1 h-4 w-px bg-neutral-300 dark:bg-neutral-600 md:hidden"
+          aria-hidden="true"
+        />
+      </div>
+
+      <!-- Middle: scrollable formatting buttons (no scrollbar) -->
+      <div class="control-bar-scroll flex min-w-0 flex-1 flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden">
       <button
         type="button"
         :class="[
@@ -337,7 +360,8 @@ const shortcutKeys = [
       </button>
       </div>
 
-      <!-- Theme toggle (right) -->
+      <!-- Right: theme toggle (fixed) -->
+      <div class="flex shrink-0 items-center">
       <button
         type="button"
         class="rounded p-1.5 text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
@@ -348,6 +372,7 @@ const shortcutKeys = [
         <PhMoon v-if="theme === 'light'" class="h-4 w-4" weight="regular" />
         <PhSun v-else class="h-4 w-4" weight="regular" />
       </button>
+      </div>
     </div>
 
     <div class="relative flex min-h-0 flex-1 flex-col overflow-auto">
@@ -433,6 +458,14 @@ const shortcutKeys = [
 </template>
 
 <style scoped>
+.control-bar-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.control-bar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 .note-editor-content :deep(> *),
 .note-editor-content :deep(.ProseMirror) {
   min-height: 100%;
