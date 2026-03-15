@@ -382,10 +382,10 @@ const shortcutKeys = [
         class="h-full min-h-[320px] animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"
       />
 
-      <!-- Info menu trigger (bottom right) -->
+      <!-- Info menu trigger (desktop only; fixed to viewport so it stays visible when content scrolls) -->
       <button
         type="button"
-        class="absolute bottom-4 right-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-lg font-semibold text-neutral-600 shadow-sm transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+        class="fixed bottom-4 right-4 z-20 hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-lg font-semibold text-neutral-600 shadow-sm transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100 md:flex"
         :class="{ 'bg-neutral-200 dark:bg-neutral-600': infoMenuOpen }"
         aria-label="App info & shortcuts"
         title="App info & shortcuts"
@@ -394,7 +394,7 @@ const shortcutKeys = [
         !
       </button>
 
-      <!-- Info panel (full height of editor, slides in from right) -->
+      <!-- Info panel (fixed to viewport so it stays visible when content has scrolled) -->
       <Transition
         enter-active-class="transition-transform duration-200 ease-out"
         enter-from-class="translate-x-full"
@@ -405,7 +405,7 @@ const shortcutKeys = [
       >
         <div
           v-show="infoMenuOpen"
-          class="absolute inset-y-0 right-0 z-10 flex w-72 flex-col border-l border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+          class="fixed inset-y-0 right-0 z-30 flex w-72 flex-col border-l border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
         >
           <div class="flex shrink-0 items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
             <h3 class="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
