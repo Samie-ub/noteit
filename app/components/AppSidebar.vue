@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
-import { PhTrashSimple, PhNotePencil, PhArrowCounterClockwise, PhArrowCircleDown } from '@phosphor-icons/vue'
+import { PhTrashSimple, PhNotePencil, PhArrowCounterClockwise, PhArrowCircleDown, PhX, PhCaretCircleLeft } from '@phosphor-icons/vue'
 import type { Note } from '../types/note'
 import { useNotes } from '../composables/useNotes'
 
 const { createNote, getRecentNotes, getActiveNotes, getTrashedNotes, deleteNote, restoreNote, permanentlyDeleteNote, emptyTrash } = useNotes()
 
 const currentNoteId = defineModel<string | null>('currentNoteId', { default: null })
+const open = defineModel<boolean>('open', { default: true })
 const recentNotes = computed(() => getRecentNotes())
 const trashedNotes = computed(() => getTrashedNotes())
 const activeNotes = computed(() => getActiveNotes())
@@ -113,14 +114,31 @@ watch([sidebarNoteList, trashedNotes], () => {
 </script>
 
 <template>
+  <!-- Mobile: backdrop when sidebar is open -->
+  <div
+    v-show="open"
+    class="fixed inset-0 z-30 bg-black/40 md:hidden"
+    aria-hidden="true"
+    @click="open = false"
+  />
+
   <aside
-    class="flex h-full min-w-[16rem] w-64 flex-shrink-0 flex-col  border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 pb-4"
+    class="flex h-full min-w-[16rem] w-64 flex-shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 pb-4 fixed inset-y-0 left-0 z-40 transition-transform duration-200 ease-out md:relative md:z-auto md:translate-x-0 md:transition-none"
+    :class="open ? 'translate-x-0' : '-translate-x-full'"
   >
-    <div class="border-b border-neutral-200 px-4 py-2.5 dark:border-neutral-700">
+    <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-2.5 dark:border-neutral-700">
       <h1 class="flex items-center gap-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
         <PhNotePencil :size="16" weight="regular" class="text-neutral-600 dark:text-neutral-400" />
         Noteit
       </h1>
+      <button
+        type="button"
+        class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 md:hidden"
+        aria-label="Close sidebar"
+        @click="open = false"
+      >
+        <PhCaretCircleLeft :size="20" weight="bold" />
+      </button>
     </div>
 
   
